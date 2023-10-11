@@ -1,0 +1,26 @@
+{
+  "name": "global-mm-api",
+  "version": "1.0.0",
+  "description": "We add later",
+  "main": "app.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/quoctrong1x96/global-mm-api.git"
+  },
+  "keywords": [
+    "motel",
+    "management"
+  ],
+  "author": "trongbq",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/quoctrong1x96/global-mm-api/issues"
+  },
+  "homepage": "https://github.com/quoctrong1x96/global-mm-api#readme",
+  "dependencies": {
+    "express": "^4.18.2"
+  }
+}
