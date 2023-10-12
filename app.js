@@ -3,6 +3,10 @@ require("dotenv").config();
 var logger = require("morgan");
 var path = require("path");
 var apiResponse = require("./helpers/apiResponse");
+var indexRouter = require("./routes/index");
+var swaggerUi = require('swagger-ui-express');
+var swaggerJSDoc = require('swagger-jsdoc');
+var swaggerDefinition = require('./helpers/swaggerDefine');
 
 //Connect to MongoDB
 var MONGODB_URL = process.env.MONGODB_URL;
@@ -33,13 +37,23 @@ if(process.env.NODE_ENV !=="test"){
 //App express config
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
-app.use(cookieParser());
+// app.use(cookieParser());
 app.use(express.static(path.join(__dirname, "public/uploads")));
 
 //App set views
-app.set("view",path.join(__dirname,"public/views"));
+app.set('views', path.join(__dirname, 'public', 'views'));
+app.set('view engine', 'ejs');
 
 //App set Route prefixes
+app.use('/', indexRouter);
+
+//App Config swagger for API
+const options = {
+  swaggerDefinition,
+  apis: ['./app.js'], // Thay thế 'app.js' bằng đường dẫn đến tệp chứa các chú thích Swagger
+};
+const swaggerSpec = swaggerJSDoc(options);
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
 
 //App throw 404 if URL not found
