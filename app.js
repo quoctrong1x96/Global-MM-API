@@ -3,6 +3,7 @@ require("dotenv").config();
 var logger = require("morgan");
 var path = require("path");
 var apiResponse = require("./helpers/apiResponse");
+var addressRouter = require("./routes/address");
 var indexRouter = require("./routes/index");
 var swaggerUi = require('swagger-ui-express');
 var swaggerJSDoc = require('swagger-jsdoc');
@@ -26,6 +27,35 @@ mongoose
     process.exit(1);
   });
 var db = mongoose.connection;
+//Update ALL Schema for middle ware update createAt & updateAt
+const updateTimestamps = function (schema) {
+  schema.add({
+      delFlag:{
+        type: Number,
+        default: 0
+      },
+      createdAt: {
+          type: Date,
+          default: Date.now,
+          required: true,
+      },
+      updatedAt: {
+          type: Date,
+          default: Date.now,
+          required: true,
+      },
+  });
+
+  schema.pre('save', function (next) {
+      this.updatedAt = new Date();
+      next();
+  });
+  schema.pre('update', function (next) {
+    this.update({}, { $set: { updatedAt: new Date() } });
+    next();
+});
+};
+mongoose.plugin(updateTimestamps);
 
 var app = express();
 
@@ -46,11 +76,12 @@ app.set('view engine', 'ejs');
 
 //App set Route prefixes
 app.use('/', indexRouter);
+app.use('/api/address', addressRouter);
 
 //App Config swagger for API
 const options = {
   swaggerDefinition,
-  apis: ['./app.js'], // Thay thế 'app.js' bằng đường dẫn đến tệp chứa các chú thích Swagger
+  apis: ['./routes/*.js'], // Thay thế 'app.js' bằng đường dẫn đến tệp chứa các chú thích Swagger
 };
 const swaggerSpec = swaggerJSDoc(options);
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
