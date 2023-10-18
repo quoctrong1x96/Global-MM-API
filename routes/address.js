@@ -4,7 +4,16 @@ const multer = require('multer');
 var router = express.Router();
 
 //Multer config to destinaton folder
-const upload = multer({dest: "uploads/excel/"});
+const storage = multer.diskStorage({
+    destination: function (req, file, cb) {
+      cb(null, 'uploads/excel/'); // Thư mục đích để lưu tệp
+    },
+    filename: function (req, file, cb) {
+      cb(null, file.originalname); // Tên tệp sẽ giữ nguyên tên gốc
+    },
+  });
+  
+  const upload = multer({ storage: storage });
 
 //router
 
@@ -24,6 +33,6 @@ const upload = multer({dest: "uploads/excel/"});
  *               - id: 2
  *                 name: Gau Gau
  */
-router.post('/country/add-excel', upload.single('excelFile'),AddressController.addCountryFromExcel);
+router.post('/country/add-excel', upload.single('file'),AddressController.addCountryFromExcel);
 
 module.exports = router;

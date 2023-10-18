@@ -4,7 +4,7 @@ const { body, validatonResult } = require("express-validator");
 const xlsx = require("xlsx");
 const { sanitizeBody } = require("express-validator");
 const auth = require("../middlewares/jwt");
-
+const fs = require("fs");
 
 //Convert Country Schema
 function CountryData(data) {
@@ -71,7 +71,7 @@ exports.countryStore = [
         }
       });
     }),
-//   sanitizeBody("*").escape(),
+  //   sanitizeBody("*").escape(),
   (req, res) => {
     try {
       const errorValidate = validatonResult(req);
@@ -124,7 +124,7 @@ exports.countryUpdate = [
         }
       });
     }),
-//   sanitizeBody("*").escape(),
+  //   sanitizeBody("*").escape(),
   (req, res) => {
     try {
       const errorValidate = validatonResult(req);
@@ -161,49 +161,82 @@ exports.countryUpdate = [
 ];
 
 exports.addCountryFromExcel = [
-  (req, res) => {
+  async (req, res) => {
     try {
       if (!req.file) {
-        return apiResponse.errorResponse(res, "No file uploaded");
+        return apiResponse.validationErrorResponse(res, "No file uploaded");
       }
       const filePath = req.file.path;
       const workbook = xlsx.readFile(filePath);
       const worksheet = workbook.Sheets[workbook.SheetNames[0]];
       const data = xlsx.utils.sheet_to_json(worksheet);
 
+      //Define column index for data
+      const postalCodeIndex = "Postal code";
+      const countryNameIndex = "Tên quốc gia";
+
       //Delete file when was read
       fs.unlinkSync(filePath);
 
+      var errorSkip = 0; //Error skip counting
+      var errors = [];
+
       for (const row of data) {
+        const countryName = row[countryNameIndex];
+        const postalCode = row[postalCodeIndex];
         // Kiểm tra xem dữ liệu không rỗng và hợp lệ
-        if (!row.countryName || !row.postalCode) {
-          console.error("Missing data. Skipping this row.");
+        if (!countryName || !postalCode) {
+          errors.push({ row, error: "Missing data." });
+          errorSkip++;
           continue; // Bỏ qua dòng nếu dữ liệu không đầy đủ
         }
 
-        if (!/^\d{5}$/.test(row.postalCode)) {
-          console.error(
-            `Invalid postal code: ${row.postalCode}. Skipping this row.`
-          );
+        if (!/^\d{5}$/.test(postalCode)) {
+          console.error(`Wrong Postal Code`);
+          errorSkip++;
           continue; // Bỏ qua dòng nếu mã bưu điện không đúng định dạng
         }
 
         const country = new Country({
-          countryName: row.countryName,
-          postalCode: row.postalCode,
+          countryName: countryName,
+          postalCode: postalCode,
         });
 
-        country.save((err) => {
-          if (err) {
-            console.error(err);
+        //Check duplicate
+        await Country.findOne({ countryName: countryName }).then((countryFinded) => {
+          // If data exist
+          if (countryFinded) {
+            errors.push({ row, error: "Data is already exist" });
+            errorSkip++;
+          } else if(errorSkip = 0){// Insert
+            try {
+              country.save();
+              console.log("Saved: " + country);
+            } catch (error) {
+              console.error(
+                `Error saving data for row: ${JSON.stringify(row)}`
+              );
+              // console.error(error);
+              // Thêm mã lỗi và thông báo lỗi vào một mảng để sau này thông báo cho người dùng
+              errors.push({ row, error });
+            }
           }
         });
       }
-
-      res.json({ message: "Data added from Excel successfully" });
+      if (errors.length > 0) {
+        return apiResponse.validationErrorResponse(
+          res,
+          "Data from Excel not good.",
+          errors
+        );
+      } else {
+        res.json({ message: "Data added from Excel successfully" });
+      }
     } catch (error) {
       console.error(error);
-      res.status(500).json({ message: "Error adding data from Excel" });
+      res
+        .status(500)
+        .json({ message: "Error when server adding data from Excel" });
     }
   },
 ];

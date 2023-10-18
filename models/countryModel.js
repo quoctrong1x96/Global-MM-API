@@ -7,7 +7,7 @@ var CountrySchema = new mongoose.Schema({
     required: true,
     default: uuidv4, //Create GUID default uuidv4
   },
-  coutryName: {
+  countryName: {
     type: String, 
     required: true,
   },
