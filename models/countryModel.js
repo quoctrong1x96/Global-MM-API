@@ -1,5 +1,6 @@
 var mongoose = require("mongoose");
 var { v4: uuidv4 } = require("uuid");
+const updateTimestamps = require("../helpers/mongooseConfig");
 
 var CountrySchema = new mongoose.Schema({
   _id: {
@@ -15,5 +16,9 @@ var CountrySchema = new mongoose.Schema({
     type: String,
   }
 });
+
+CountrySchema.plugin(updateTimestamps);
+
+
 
 module.exports = mongoose.model('Country', CountrySchema);

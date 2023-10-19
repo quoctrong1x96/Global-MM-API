@@ -1,17 +1,17 @@
 var express = require("express");
-const AddressController = require('../controllers/addressController');
-const upload = require('../helpers/multerUpload');
+const typeController = require('../controllers/typeController');
+const upload = require("../helpers/multerUpload");
+
+
 var router = express.Router();
-
-
 
 //router
 
 /**
  * @swagger
- * /api/address/country/add-excel:
+ * /api/type/add-excel:
  *   post:
- *     summary: Insert country data from excel
+ *     summary: Insert Type data from excel
  *     responses:
  *       200:
  *         description: count of list success
@@ -23,6 +23,6 @@ var router = express.Router();
  *               - id: 2
  *                 name: Gau Gau
  */
-router.post('/country/add-excel', upload.single('file'),AddressController.addCountryFromExcel);
+router.post('/add-excel', upload.single('file'),typeController.addTypeFromExcel);
 
 module.exports = router;

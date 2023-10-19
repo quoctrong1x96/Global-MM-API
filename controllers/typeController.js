@@ -1,32 +1,27 @@
-const Country = require("../models/countryModel");
+const Type = require("../models/typeModel");
 const apiResponse = require("../helpers/apiResponse");
 const { body, validatonResult } = require("express-validator");
 const xlsx = require("xlsx");
 const { sanitizeBody } = require("express-validator");
 const auth = require("../middlewares/jwt");
 const fs = require("fs");
-const logger = require('../helpers/loggerWinston');
+const logger = require("../helpers/loggerWinston");
 
-//Convert Country Schema
-function CountryData(data) {
+//Convert type Schema
+function TypeData(data) {
   (this._id = data.id),
-    (this.countryName = data.countryName),
-    (this.postalCode = data.postalCode);
+    (this.code = data.code),
+    (this.name = data.name),
+    (this.value = data.value),
+    (this.parentId = data.ParentId);
 }
 
-exports.countryList = [
+/**
+ * Find List type by condition
+ */
+exports.typeList = [
   function (req, res) {
     try {
-      //TODO Create condition
-      /**
-       * { field: { $gt: value } }
-       * $eq: So sánh bằng (Equal)
-       * $gt: So sánh lớn hơn (Greater Than).
-       * $lt: So sánh nhỏ hơn (Less Than).
-       * $gte: So sánh lớn hơn hoặc bằng (Greater Than or Equal).
-       * $lte: So sánh nhỏ hơn hoặc bằng (Less Than or Equal).
-       * $gte: So sánh lớn hơn hoặc bằng (Greater Than or Equal).
-       */
       var condition = {};
 
       //Find data by condition
@@ -56,19 +51,20 @@ exports.countryList = [
   },
 ];
 /**
- * Create new Country data
+ * Create new Type data
  *
- * @param {string}  countryName Country name
- * @param {string}  postalCode optional
+ * @param {string}  name type name
+ * @param {string}  value type value
+ * @param {string}  parentId type Parent id
  */
-exports.countryStore = [
-  body("countryName", "Country name must not be empty")
+exports.typeStore = [
+  body("name", "Type name must not be empty")
     .isLength({ min: 1 })
     .trim()
     .custom((value, { req }) => {
-      return Country.findOne({ countryName: value }).then((country) => {
-        if (country) {
-          return Promise.reject("Country already exist with this name");
+      return Type.findOne({ name: value }).then((type) => {
+        if (type) {
+          return Promise.reject("Type already exist with this name");
         }
       });
     }),
@@ -76,9 +72,9 @@ exports.countryStore = [
   (req, res) => {
     try {
       const errorValidate = validatonResult(req);
-      var country = new Country({
-        countryName: req.body.countryName,
-        postalCode: req.body.postalCode ? req.body.postalCode : "",
+      var type = new Country({
+        name: req.body.name,
+        value: req.body.value ? req.body.value : "",
       });
       if (!errorValidate.isEmpty()) {
         return apiResponse.validationErrorResponse(
@@ -87,16 +83,16 @@ exports.countryStore = [
           errorValidate.array()
         );
       } else {
-        //Save country
-        country.save(function (err) {
+        //Save Type
+        type.save(function (err) {
           if (err) {
             return apiResponse.errorResponse(res, err);
           }
-          let countryData = new CountryData(country);
+          let typeData = new CountryData(type);
           return apiResponse.successResponseWithData(
             res,
             "Country add success",
-            countryData
+            typeData
           );
         });
       }
@@ -108,18 +104,19 @@ exports.countryStore = [
 ];
 
 /**
- * Update Country by ID
+ * Update Type by ID
  *
- * @param {string}  id ID of country
- * @param {string}  countryName Country name
- * @param {string}  postalCode optional
+ * @param {string}  id ID of Type
+ * @param {string}  name Type name
+ * @param {string}  value Value of Type
+ * @param {string}  parentId ID of parent type
  */
-exports.countryUpdate = [
-  body("countryName", "Country name must not be empty")
+exports.typeUpdate = [
+  body("name", "Type name must not be empty")
     .isLength({ min: 1 })
     .trim()
     .custom((value, { req }) => {
-      return Country.findOne({ _id: req.params.countryId }).then((country) => {
+      return Type.findOne({ _id: req.params.id }).then((country) => {
         if (!country) {
           return Promise.reject("Country have not exist with this name yet");
         }
@@ -161,10 +158,11 @@ exports.countryUpdate = [
   },
 ];
 
-exports.addCountryFromExcel = [
+exports.addTypeFromExcel = [
+  body("file", "File must be not null").isEmpty(),
   async (req, res) => {
     try {
-      logger.info("Function: addCountryFromExcel");
+      logger.info("Function: addTypeFromExcel");
       if (!req.file) {
         return apiResponse.validationErrorResponse(res, "No file uploaded");
       }
@@ -174,8 +172,10 @@ exports.addCountryFromExcel = [
       const data = xlsx.utils.sheet_to_json(worksheet);
 
       //Define column index for data
-      const postalCodeIndex = "Postal code";
-      const countryNameIndex = "Tên quốc gia";
+      const valueIndex = "Giá trị";
+      const nameIndex = "Tên";
+      const codeIndex = "Mã";
+      const codeParentIndex = "Mã cha";
 
       //Delete file when was read
       fs.unlinkSync(filePath);
@@ -184,43 +184,44 @@ exports.addCountryFromExcel = [
       var errors = [];
 
       for (const row of data) {
-        const countryName = row[countryNameIndex];
-        const postalCode = row[postalCodeIndex];
+        const typeName = row[nameIndex];
+        const typeCode = row[codeIndex];
+        const typeValue = row[valueIndex];
+        const typeParent = row[codeParentIndex];
 
         // Kiểm tra xem dữ liệu không rỗng và hợp lệ
-        if (!countryName || !postalCode) {
-          errors.push({ row, error: "Missing data." });
+        if (!typeName || !typeCode) {
+          errors.push({ row, error: "Name or Code of Type must be not null" });
           errorSkip++;
           continue; // Bỏ qua dòng nếu dữ liệu không đầy đủ
         }
 
-        if (!/^\d{5}$/.test(postalCode)) {
-          errors.push({ row, error: "Wrong postal code." });
-          errorSkip++;
-          continue; // Bỏ qua dòng nếu mã bưu điện không đúng định dạng
-        }
-
-        const country = new Country({
-          countryName: countryName,
-          postalCode: postalCode,
+        const type = new Type({
+          name: typeName,
+          code: typeCode,
+          parentId: typeParent,
+          value: typeValue
         });
 
         //Check duplicate
-        await Country.findOne({ countryName: countryName }).then((countryFinded) => {
-          // If data exist
-          logger.info(errorSkip + " và " + countryFinded);
-          if (countryFinded) {
-            errors.push({ row, error: "Data is already exist" });
-            errorSkip++;
-          } else if(errorSkip == 0){// Insert
-            try {
-              country.save();
-            } catch (error) {
-              // Thêm mã lỗi và thông báo lỗi vào một mảng để sau này thông báo cho người dùng
-              errors.push({ row, error });
+        await Type.findOne({ code: type.code }).then(
+          (typeFound) => {
+            // If data exist
+            logger.info(errorSkip + " và " + typeFound);
+            if (typeFound) {
+              errors.push({ row, error: "Data is already exist" });
+              errorSkip++;
+            } else if (errorSkip == 0) {
+              // Insert
+              try {
+                type.save();
+              } catch (error) {
+                // Thêm mã lỗi và thông báo lỗi vào một mảng để sau này thông báo cho người dùng
+                errors.push({ row, error });
+              }
             }
           }
-        });
+        );
       }
       if (errors.length > 0) {
         logger.error(errors);
