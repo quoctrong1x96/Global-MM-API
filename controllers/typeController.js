@@ -6,6 +6,7 @@ const { sanitizeBody } = require("express-validator");
 const auth = require("../middlewares/jwt");
 const fs = require("fs");
 const logger = require("../helpers/loggerWinston");
+const { default: mongoose } = require("mongoose");
 
 //Convert type Schema
 function TypeData(data) {
@@ -159,7 +160,6 @@ exports.typeUpdate = [
 ];
 
 exports.addTypeFromExcel = [
-  body("file", "File must be not null").isEmpty(),
   async (req, res) => {
     try {
       logger.info("Function: addTypeFromExcel");
@@ -186,8 +186,6 @@ exports.addTypeFromExcel = [
       for (const row of data) {
         const typeName = row[nameIndex];
         const typeCode = row[codeIndex];
-        const typeValue = row[valueIndex];
-        const typeParent = row[codeParentIndex];
 
         // Kiểm tra xem dữ liệu không rỗng và hợp lệ
         if (!typeName || !typeCode) {
@@ -196,32 +194,13 @@ exports.addTypeFromExcel = [
           continue; // Bỏ qua dòng nếu dữ liệu không đầy đủ
         }
 
-        const type = new Type({
-          name: typeName,
-          code: typeCode,
-          parentId: typeParent,
-          value: typeValue
-        });
-
         //Check duplicate
-        await Type.findOne({ code: type.code }).then(
-          (typeFound) => {
-            // If data exist
-            logger.info(errorSkip + " và " + typeFound);
-            if (typeFound) {
-              errors.push({ row, error: "Data is already exist" });
-              errorSkip++;
-            } else if (errorSkip == 0) {
-              // Insert
-              try {
-                type.save();
-              } catch (error) {
-                // Thêm mã lỗi và thông báo lỗi vào một mảng để sau này thông báo cho người dùng
-                errors.push({ row, error });
-              }
-            }
+        await Type.findOne({ code: typeCode }).then((typeFound) => {
+          if (typeFound) {
+            errors.push({ row, error: "Data is already exist" });
+            errorSkip++;
           }
-        );
+        });
       }
       if (errors.length > 0) {
         logger.error(errors);
@@ -231,11 +210,78 @@ exports.addTypeFromExcel = [
           errors
         );
       } else {
-        logger.info("Data added from Excel successfully");
-        res.json({ message: "Data added from Excel successfully" });
+        //Begin MongoDB session
+        const session = mongoose.startSession();
+
+        try {
+          //Loop data
+          var index = 0;
+          for (const row of data) {
+            logger.error(index++);
+            //Get data from row
+            const typeName = row[nameIndex];
+            const typeCode = row[codeIndex];
+            const typeValue = row[valueIndex];
+            const typeParent = row[codeParentIndex];
+            var typeParentId = "0";
+
+            //Check parentID if value not 0 or null
+            if (typeParent != null && typeParent != "0" && typeParent != 0) {
+              const parentExists = await Type.exists({
+                code: typeCode,
+              });
+              if (parentExists) {
+                typeParentId = parentExists._id;
+              } else {
+                errors.push({ row, error: "Mã cha not exist" });
+                logger.error("Mã cha không tồn tại");
+                continue;
+              }
+            }
+
+            //Create new rowdata
+            var type = new Type({
+              name: typeName,
+              code: typeCode,
+              parentId: typeParent,
+              value: typeParentId,
+            });
+
+            //Save data
+            await type.save();
+          }
+          logger.info("Errors: " + errors.length);
+          //If errors has, then skip save, because we only insert all or rollback all
+          if (errors.length == 0) {
+            //Comit session of MongoDB connect
+            (await session).commitTransaction;
+            logger.info("Data added from Excel successfully");
+            //Return response with message success
+            res.json({ message: "Data added from Excel successfully" });
+          } else {
+            //Rollback all session
+            (await session).abortTransaction;
+            return apiResponse.validationErrorResponse(
+              res,
+              "Data from Excel not good.",
+              errors
+            );
+          }
+        } catch (error) {
+          logger.error(error.message);
+          errors.push({ row, error });
+          (await session).abortTransaction;
+          return apiResponse.validationErrorResponse(
+            res,
+            "Data from Excel not good.",
+            errors
+          );
+        } finally {
+          (await session).endSession;
+        }
       }
     } catch (error) {
-      logger.error(errors);
+      logger.error(error.message);
       res
         .status(500)
         .json({ message: "Error when server adding data from Excel" });
