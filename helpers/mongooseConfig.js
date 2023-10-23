@@ -1,5 +1,7 @@
- //Update ALL Schema for middle ware update createAt & updateAt
- module.exports =  updateTimestamps = function (schema) {
+var mongoose = require("mongoose");
+
+//Update ALL Schema for middle ware update createAt & updateAt
+ exports.updateTimestamps = function (schema) {
     schema.add({
         delFlag:{
           type: Number,
@@ -26,3 +28,9 @@
       next();
   });
   };
+
+  exports.openTransaction = async function(){
+    const session = await mongoose.startSession();
+    session.startTransaction();
+    return session;
+  }

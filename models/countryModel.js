@@ -1,6 +1,6 @@
 var mongoose = require("mongoose");
 var { v4: uuidv4 } = require("uuid");
-const updateTimestamps = require("../helpers/mongooseConfig");
+const {updateTimestamps} = require("../helpers/mongooseConfig");
 
 var CountrySchema = new mongoose.Schema({
   _id: {

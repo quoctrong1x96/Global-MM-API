@@ -1,6 +1,6 @@
 var mongoose = require("mongoose");
 var {v4: uuidv4} = require("uuid");
-const updateTimestamps = require("../helpers/mongooseConfig");
+const {updateTimestamps} = require("../helpers/mongooseConfig");
 
 var TypeModel = new mongoose.Schema({
     _id:{
@@ -10,11 +10,11 @@ var TypeModel = new mongoose.Schema({
     },
     name: {
         type: String,
-        required: true,
+        // required: true,
     },
     code:{
         type: String,
-        required: true
+        // required: true
     },
     value:{
         type: String,

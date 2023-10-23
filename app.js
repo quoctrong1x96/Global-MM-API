@@ -56,7 +56,7 @@ app.use((err, req, res) => {
 });
 
 mongoose
-  .connect(MONGODB_URL, {})
+  .connect(MONGODB_URL, { useNewUrlParser: true, useUnifiedTopology: true })
   .then(() => {
     //don't show this LOGS when it is test
     if (process.env.NODE_ENV !== "test") {
