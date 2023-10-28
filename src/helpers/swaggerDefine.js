@@ -1,4 +1,4 @@
-const swaggerDefinition = {
+const  swaggerDefinition = {
     openapi: '3.0.0',
     info: {
         title: 'Global MM API',
@@ -7,4 +7,4 @@ const swaggerDefinition = {
     },
 };
 
-module.exports = swaggerDefinition;
+export default swaggerDefinition;

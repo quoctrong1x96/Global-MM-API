@@ -1,11 +1,11 @@
-var mongoose = require("mongoose");
-var {v4: uuidv4} = require("uuid");
+import mongoose from 'mongoose';
+import {v4 as uuidv4} from 'uuid';
 
 var locationModel = mongoose.Schema({
     _id:{
         type: String,
         required: true,
-        default: uuidv4
+        default: uuidv4()
     },
     name: {
         type: String,
@@ -13,7 +13,7 @@ var locationModel = mongoose.Schema({
     },
     value:{
         type: String,
-        defualt: ""
+        defualt: ''
     },
     typeId: {
         type: String,
@@ -24,4 +24,10 @@ var locationModel = mongoose.Schema({
     }
 });
 
-module.exports = mongoose.model("Location", locationModel);
+locationModel.method('toJSON', function() {
+    const { __v, _id, ...object } = this.toObject();
+    object.id = _id;
+    return object;
+  });
+
+export default mongoose.model('Location', locationModel);

@@ -1,6 +1,10 @@
-var express = require("express");
-const AddressController = require('../controllers/addressController');
-const upload = require('../helpers/multerUpload');
+import express from 'express';
+
+// import AddressController from '../controllers/addressController.js';
+import upload from '../helpers/multerUpload.js';
+
+
+
 var router = express.Router();
 
 
@@ -23,6 +27,6 @@ var router = express.Router();
  *               - id: 2
  *                 name: Gau Gau
  */
-router.post('/country/add-excel', upload.single('file'),AddressController.addCountryFromExcel);
+// router.post('/country/add-excel', upload.single('file'),AddressController.addCountryFromExcel);
 
-module.exports = router;
+export default router;

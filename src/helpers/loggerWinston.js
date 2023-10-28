@@ -1,4 +1,4 @@
-var winston = require("winston");
+import winston from 'winston';
 const colorize = winston.format.colorize;
 
 //Config logger winston
@@ -13,23 +13,23 @@ const levelsWionston = {
 };
 
 const loggerWinston = winston.createLogger({
-  level: "info",
+  level: 'info',
   format: winston.format.combine(
     colorize(), // Sử dụng winston.format.colorize ở đây
     winston.format.simple()
   ),
-  defaultMeta: { service: "user-service" },
+  defaultMeta: { service: 'user-service' },
   transports: [
     //
     // - Write all logs with importance level of `error` or less to `error.log`
     // - Write all logs with importance level of `info` or less to `combined.log`
     //
-    new winston.transports.File({ filename: "error.log", level: "error" }),
-    new winston.transports.File({ filename: "combined.log" }),
+    new winston.transports.File({ filename: 'error.log', level: 'error' }),
+    new winston.transports.File({ filename: 'combined.log' }),
   ],
 });
 //don't show the log when it is test or production
-if (process.env.NODE_ENV !== "production" && process.env.NODE_ENV !== "test") {
+if (process.env.NODE_ENV !== 'production' && process.env.NODE_ENV !== 'test') {
   loggerWinston.add(
     new winston.transports.Console({
       format: winston.format.simple(),
@@ -39,4 +39,4 @@ if (process.env.NODE_ENV !== "production" && process.env.NODE_ENV !== "test") {
 
 
 // Xuất logger để sử dụng ở các phần khác của ứng dụng
-module.exports = loggerWinston;
+export default loggerWinston;

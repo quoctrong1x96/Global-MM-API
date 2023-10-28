@@ -1,4 +1,4 @@
-const mime = require("mime-types");
+import mime from 'mime-types';
 
 /**
  * Check file input is Excel file
@@ -9,16 +9,21 @@ const mime = require("mime-types");
  *   - 1: Is not excel file.
  *   - -1: File not found.
  */
-exports.isExcel = function (file) {
+const isExcel = function (file) {
   if (!file) return -1;
   const mimeType = mime.lookup(file.originalname);
   if (
-    mimeType === "application/vnd.ms-excel" ||
+    mimeType === 'application/vnd.ms-excel' ||
     mimeType ===
-      "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
   ) {
     return 0;
   } else {
     return 1;
   }
 };
+const isExtention ={
+  isExcel,
+}
+
+export default isExtention;

@@ -1,0 +1,12 @@
+{
+    "plugins": ["prettier-plugin-sort-imports"],
+    "sort-imports": true,
+    "importOrder": ["^\\u0000", "^@?\\w", "^\\."],
+    "importOrderSeparation": true,
+    "trailingComma": "es5",
+    "tabWidth": 2,
+    "semi": false,
+    "singleQuote": true
+  
+  }
+  

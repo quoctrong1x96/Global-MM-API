@@ -1,6 +1,7 @@
-var express = require("express");
-const typeController = require('../controllers/typeController');
-const upload = require("../helpers/multerUpload");
+import express from 'express';
+
+import typeController from '../controllers/typeController.js';
+import upload from '../helpers/multerUpload.js';
 
 
 var router = express.Router();
@@ -23,6 +24,6 @@ var router = express.Router();
  *               - id: 2
  *                 name: Gau Gau
  */
-router.post('/add-excel', upload.single('file'),typeController.addTypeFromExcel);
+router.post('/add-excel', upload.single('file'),typeController.importFromExcel);
 
-module.exports = router;
+export default router;
