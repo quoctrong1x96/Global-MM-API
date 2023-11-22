@@ -2,35 +2,36 @@ import mongoose from 'mongoose';
 import {v4 as uuidv4} from 'uuid';
 import {updateTimestamps} from '../helpers/mongooseConfig.js';
 
-var locationModel = mongoose.Schema({
+var adLogModel = mongoose.Schema({
     _id:{
         type: String,
         required: true,
         default: uuidv4()
     },
-    name: {
+    userName: {
         type: String,
         required: true,
     },
-    value:{
+    serviceName:{
         type: String,
-        defualt: ''
     },
-    typeId: {
-        type: String,
-        required: true,
+    actionRec: {
+        type: Number
     },
-    parentId:{
-        type: String,
+    data:{
+        type: String
+    },
+    ipAddress:{
+        type: String
     }
 });
 
-locationModel.plugin(updateTimestamps);
+adLogModel.plugin(updateTimestamps);
 
-locationModel.method('toJSON', function() {
+adLogModel.method('toJSON', function() {
     const { __v, _id, ...object } = this.toObject();
     object.id = _id;
     return object;
   });
 
-export default mongoose.model('Location', locationModel);
+export default mongoose.model('AD_LOG', adLogModel);

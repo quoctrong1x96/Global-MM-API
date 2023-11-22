@@ -2,7 +2,7 @@ import mongoose from 'mongoose';
 import {v4 as uuidv4} from 'uuid';
 import {updateTimestamps} from '../helpers/mongooseConfig.js';
 
-var locationModel = mongoose.Schema({
+var adRoleModel = mongoose.Schema({
     _id:{
         type: String,
         required: true,
@@ -12,25 +12,26 @@ var locationModel = mongoose.Schema({
         type: String,
         required: true,
     },
-    value:{
-        type: String,
-        defualt: ''
+    defaultFlg:{
+        type: Boolean,
     },
-    typeId: {
+    pageId: {
         type: String,
-        required: true,
     },
     parentId:{
-        type: String,
+        type: String
+    },
+    delFlg:{
+        type: Boolean
     }
 });
 
-locationModel.plugin(updateTimestamps);
+adRoleModel.plugin(updateTimestamps);
 
-locationModel.method('toJSON', function() {
+adRoleModel.method('toJSON', function() {
     const { __v, _id, ...object } = this.toObject();
     object.id = _id;
     return object;
   });
 
-export default mongoose.model('Location', locationModel);
+export default mongoose.model('AD_ROLE', adPageModel);

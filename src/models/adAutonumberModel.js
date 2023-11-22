@@ -2,35 +2,33 @@ import mongoose from 'mongoose';
 import {v4 as uuidv4} from 'uuid';
 import {updateTimestamps} from '../helpers/mongooseConfig.js';
 
-var locationModel = mongoose.Schema({
+var adAutoNumberModel = mongoose.Schema({
     _id:{
         type: String,
         required: true,
         default: uuidv4()
     },
-    name: {
+    format: {
         type: String,
         required: true,
     },
-    value:{
-        type: String,
-        defualt: ''
+    step:{
+        type: Number,
+        defualt: 1,
+        required: true
     },
-    typeId: {
-        type: String,
+    current: {
+        type: Number,
         required: true,
-    },
-    parentId:{
-        type: String,
     }
 });
 
-locationModel.plugin(updateTimestamps);
+adAutoNumberModel.plugin(updateTimestamps);
 
-locationModel.method('toJSON', function() {
+adAutoNumberModel.method('toJSON', function() {
     const { __v, _id, ...object } = this.toObject();
     object.id = _id;
     return object;
   });
 
-export default mongoose.model('Location', locationModel);
+export default mongoose.model('Ad_Autonumber', adAutoNumberModel);
